@@ -8,6 +8,7 @@
  -------------------------------
  w/ vcpkg installed and added to path: <br>
  install [libcurl](https://curl.se/libcurl/): An open-source and easy-to-use HTTP client for C and C++ built on top of cURL. <br>
+ NOTE: I highly recommend checking out [libcurl documentation](https://curl.se/libcurl/c/) if you are new to web scraping / c++. <br> 
  install [libxml2](https://gitlab.gnome.org/GNOME/libxml2/): A HTML and XML parser with a complete element selection API based on XPath. <br>
  -------------------------------
  ex: vcpkg install curl <br>
