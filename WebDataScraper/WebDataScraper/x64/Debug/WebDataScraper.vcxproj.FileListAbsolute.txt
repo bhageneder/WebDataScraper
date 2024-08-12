@@ -1,0 +1,3 @@
+C:\Users\minet\Documents\repos\WebDataScraper\WebDataScraper\x64\Debug\libcurl-d.dll
+C:\Users\minet\Documents\repos\WebDataScraper\WebDataScraper\x64\Debug\zlibd1.dll
+C:\Users\minet\Documents\repos\WebDataScraper\WebDataScraper\WebDataScraper\x64\Debug\WebDataS.4F7C482C.Up2Date
