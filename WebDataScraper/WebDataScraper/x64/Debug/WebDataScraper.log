@@ -1,5 +1,5 @@
 ﻿  WebDataScraper.cpp
-C:\Users\minet\Documents\repos\WebDataScraper\WebDataScraper\WebDataScraper.cpp(91,80): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\minet\Documents\repos\WebDataScraper\WebDataScraper\WebDataScraper.cpp(111,84): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
   WebDataScraper.vcxproj -> C:\Users\minet\Documents\repos\WebDataScraper\WebDataScraper\x64\Debug\WebDataScraper.exe
   'pwsh.exe' is not recognized as an internal or external command,
   operable program or batch file.

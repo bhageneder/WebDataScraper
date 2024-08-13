@@ -80,6 +80,107 @@ int main() {
     // initialize curl globally
     curl_global_init(CURL_GLOBAL_ALL);
 
+    // initialize an array of "Product"
+    std::vector<Product> products;
+
+    // web page to start scraping from
+    std::string first_page = "https://www.scrapingcourse.com/ecommerce/";
+    // initialize the list of pages to scrape
+    std::vector<std::string> pages_to_scrape = { first_page };
+    // initialize the list of pages discovered
+    std::vector<std::string> pages_discovered = { first_page };
+
+    // current iteration
+    int i = 1;
+    // max number of iterations allowed
+    int const max_iterations = 5;
+
+    xmlChar* xml_expression = (xmlChar*)"//li[contains(@class, 'product')]";
+
+    // until there is still a page to scrape or
+    // the limit gets hit
+    while (!pages_to_scrape.empty() && i <= max_iterations) {
+        // get the first page to scrape
+        // and remove it from the list
+        std::string page_to_scrape = pages_to_scrape.at(0);
+        pages_to_scrape.erase(pages_to_scrape.begin());
+
+        std::string html_document = get_request(page_to_scrape);
+
+        // forward HTML document to libxml2
+        htmlDocPtr doc = htmlReadMemory(html_document.c_str(), html_document.length(), nullptr, nullptr, HTML_PARSE_NOERROR);
+
+        // scraping logic...
+
+        // retrieve all HTML li.product elements with the XPath selector
+        xmlXPathContextPtr context = xmlXPathNewContext(doc);
+        xmlXPathObjectPtr product_html_elements = xmlXPathEvalExpression(xml_expression, context);
+        if (product_html_elements == nullptr || product_html_elements->nodesetval == nullptr) {
+            std::cerr << "No matching nodes found for the XPath expression: " << xml_expression << std::endl;
+            // Handle the error
+            return 35;
+        }
+
+        // Iterate over the list of the product nodes and extract the desired data:
+        for (int j = 0; j < product_html_elements->nodesetval->nodeNr; ++j) {
+            // get the current element of the loop
+            xmlNodePtr product_html_element = product_html_elements->nodesetval->nodeTab[j];
+
+            // set the context to restrict XPath selectors
+            // to the children of the current element
+            xmlXPathSetContextNode(product_html_element, context);
+
+            xmlNodePtr url_html_element = xmlXPathEvalExpression((xmlChar*)".//a", context)->nodesetval->nodeTab[0];
+            std::string url = std::string(reinterpret_cast<char*>(xmlGetProp(url_html_element, (xmlChar*)"href")));
+            xmlNodePtr image_html_element = xmlXPathEvalExpression((xmlChar*)".//a/img", context)->nodesetval->nodeTab[0];
+            std::string image = std::string(reinterpret_cast<char*>(xmlGetProp(image_html_element, (xmlChar*)"src")));
+            xmlNodePtr name_html_element = xmlXPathEvalExpression((xmlChar*)".//a/h2", context)->nodesetval->nodeTab[0];
+            std::string name = std::string(reinterpret_cast<char*>(xmlNodeGetContent(name_html_element)));
+            xmlNodePtr price_html_element = xmlXPathEvalExpression((xmlChar*)".//a/span", context)->nodesetval->nodeTab[0];
+            std::string price = std::string(reinterpret_cast<char*>(xmlNodeGetContent(price_html_element)));
+
+            Product product = { url, image, name, price };
+            products.push_back(product);
+        }
+
+        // re-initialize the XPath context to
+        // restore it to the entire document
+        context = xmlXPathNewContext(doc);
+
+        // extract the list of pagination links
+        xmlXPathObjectPtr pagination_html_elements = xmlXPathEvalExpression((xmlChar*)"//a[@class='page-numbers']", context);
+
+        // iterate over it to discover new links to scrape
+        for (int i = 0; i < pagination_html_elements->nodesetval->nodeNr; ++i) {
+            xmlNodePtr pagination_html_element = pagination_html_elements->nodesetval->nodeTab[i];
+
+            // extract the pagination URL
+            xmlXPathSetContextNode(pagination_html_element, context);
+            std::string pagination_link = std::string(reinterpret_cast<char*>(xmlGetProp(pagination_html_element, (xmlChar*)"href")));
+            // if the page discovered is new
+            if (std::find(pages_discovered.begin(), pages_discovered.end(), pagination_link) == pages_discovered.end())
+            {
+                // if the page discovered should be scraped
+                pages_discovered.push_back(pagination_link);
+                if (std::find(pages_to_scrape.begin(), pages_to_scrape.end(), pagination_link) == pages_to_scrape.end())
+                {
+                    pages_to_scrape.push_back(pagination_link);
+                }
+            }
+        }
+
+        // free up libxml2 resources
+        xmlXPathFreeContext(context);
+        xmlFreeDoc(doc);
+
+        // write to persistent storage
+        write_to_csv(products);
+
+        // increment the iteration counter
+        i++;
+    }
+
+    /*
     // download the target HTML document 
     // and print it
     std::string html_document = get_request("https://www.scrapingcourse.com/ecommerce/");
@@ -93,9 +194,6 @@ int main() {
     // retrieve all HTML li.product elements with the XPath selector
     xmlXPathContextPtr context = xmlXPathNewContext(doc);
     xmlXPathObjectPtr product_html_elements = xmlXPathEvalExpression((xmlChar*)"//li[contains(@class, 'product')]", context);
-
-    // initialize an array of "Product"
-    std::vector<Product> products;
 
     // Iterate over the list of the product nodes and extract the desired data:
     for (int i = 0; i < product_html_elements->nodesetval->nodeNr; ++i) {
@@ -123,7 +221,10 @@ int main() {
     xmlXPathFreeContext(context);
     xmlFreeDoc(doc);
 
+    // write to persistent storage
     write_to_csv(products);
+
+    */
 
     // free global curl resources
     curl_global_cleanup();
